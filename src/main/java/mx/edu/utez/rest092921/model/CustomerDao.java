@@ -3,125 +3,165 @@ package mx.edu.utez.rest092921.model;
 
 import mx.edu.utez.rest092921.database.ConnectionMysql;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CustomerDao {
-    private Connection con;
-    private CallableStatement cstm;
-    private ResultSet rs;
+    Connection con;
+    PreparedStatement pstm;
+    ResultSet rs;
+    Statement stm;
+    String query;
 
     public List<Customer> findAll(){
-        List<Customer> listCustomers = new ArrayList<>();
-
+        List<Customer> listCustomers = new ArrayList();
         try{
             con = ConnectionMysql.getConnection();
-            cstm = con.prepareCall("SELECT * FROM customers;");
-            rs = cstm.executeQuery();
-
+            query = "SELECT * FROM customers;";
+            stm = con.createStatement();
+            rs = stm.executeQuery(query);
             while(rs.next()){
                 Customer customer = new Customer();
-
+                customer.setCustomerNumber(rs.getInt("customerNumber"));
                 customer.setCustomerName(rs.getString("customerName"));
-                customer.setContactFirstName(rs.getString("contactFirstName"));
                 customer.setContactLastName(rs.getString("contactLastName"));
+                customer.setContactFirstName(rs.getString("contactFirstName"));
                 customer.setPhone(rs.getString("phone"));
+                customer.setAddressLine1(rs.getString("addressLine1"));
+                customer.setAddressLine2(rs.getString("addressLine2"));
+                customer.setCity(rs.getString("city"));
+                customer.setState(rs.getString("state"));
+                customer.setPostalCode(rs.getString("postalCode"));
+                customer.setCountry(rs.getString("country"));
+                customer.setSalesRepEmployeeNumber(rs.getInt("salesRepEmployeeNumber"));
+                customer.setCreditLimit(rs.getDouble("creditLimit"));
 
                 listCustomers.add(customer);
             }
-        }catch(SQLException e){
-            System.out.printf("Ha sucedido algún error: %s", e.getMessage());
+        }catch (SQLException e){
+            e.printStackTrace();
         }finally{
-            ConnectionMysql.closeConnections(con, cstm, rs);
+            closeConnections();
         }
         return listCustomers;
     }
 
     public Customer findByCustomerNumber(int customerNumber){
         Customer customer = null;
-
         try{
             con = ConnectionMysql.getConnection();
-            cstm = con.prepareCall("SELECT * FROM customer WHERE customerNumber = ?;");
-            cstm.setInt(1, customerNumber);
-            rs = cstm.executeQuery();
-
+            query = "SELECT * FROM customers WHERE customerNumber = ?";
+            pstm = con.prepareStatement(query);
+            pstm.setInt(1, customerNumber);
+            rs = pstm.executeQuery();
             if(rs.next()){
                 customer = new Customer();
-
+                customer.setCustomerNumber(rs.getInt("customerNumber"));
                 customer.setCustomerName(rs.getString("customerName"));
-                customer.setContactFirstName(rs.getString("contactFirstName"));
                 customer.setContactLastName(rs.getString("contactLastName"));
+                customer.setContactFirstName(rs.getString("contactFirstName"));
                 customer.setPhone(rs.getString("phone"));
-
+                customer.setAddressLine1(rs.getString("addressLine1"));
+                customer.setAddressLine2(rs.getString("addressLine2"));
+                customer.setCity(rs.getString("city"));
+                customer.setState(rs.getString("state"));
+                customer.setPostalCode(rs.getString("postalCode"));
+                customer.setCountry(rs.getString("country"));
+                customer.setSalesRepEmployeeNumber(rs.getInt("salesRepEmployeeNumber"));
+                customer.setCreditLimit(rs.getDouble("creditLimit"));
             }
-        }catch(SQLException e){
-            System.out.printf("Ha sucedido algún error: %s", e.getMessage());
-        }finally{
-            ConnectionMysql.closeConnections(con, cstm, rs);
+        }catch (SQLException | NullPointerException e){
+            e.printStackTrace();
+        }finally {
+            closeConnections();
         }
         return customer;
     }
 
-    public boolean save(Customer customer, boolean isCreate){
-        boolean flag = false;
-
+    public boolean saveCustomer(Customer customer, boolean isCreated){
+        boolean state = false;
         try{
             con = ConnectionMysql.getConnection();
-            if(isCreate){
-                cstm = con.prepareCall("INSERT INTO customers(customerNumber,customerName,contactLastName,contactFirstName,phone,addressLine1,addressLine2,city," +
-                        "state,postalCode,country,salesRepEmployeeNumber,creditLimit)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);");
-
-                cstm.setInt(1, customer.getCustomerNumber());
-                cstm.setString(2, customer.getCustomerName());
-                cstm.setString(3, customer.getContactLastName());
-                cstm.setString(4, customer.getContactFirstName());
-                cstm.setString(5, customer.getPhone());
-                cstm.setString(6, customer.getAddressLine1());
-                cstm.setString(7, customer.getAddressLine2());
-                cstm.setString(8, customer.getCity());
-                cstm.setString(9, customer.getState());
-                cstm.setString(10, customer.getPostalCode());
-                cstm.setString(11, customer.getCountry());
-                cstm.setInt(12, customer.getSalesRepEmployeeNumber());
-                cstm.setDouble(13, customer.getCreditLimit());
-
-            } else {
-                cstm = con.prepareCall("UPDATE customer SET customerName = ?, contactLastName = ?, contactFirstName = ?, phone = ? WHERE customerNumber = ?;");
-
-                cstm.setString(1, customer.getCustomerName());
-                cstm.setString(2, customer.getContactLastName());
-                cstm.setString(3, customer.getContactFirstName());
-                cstm.setString(4, customer.getPhone());
-                cstm.setInt(5, customer.getCustomerNumber());
+            if(isCreated){
+                query = "INSERT INTO customers(customerNumber, customerName, contactLastName, contactFirstName, phone, addressLine1, addressLine2," +
+                        "city, state, postalCode, country, salesRepEmployeeNumber, creditLimit) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);";
+                pstm = con.prepareStatement(query);
+                pstm.setInt(1, customer.getCustomerNumber());
+                pstm.setString(2, customer.getCustomerName());
+                pstm.setString(3, customer.getContactLastName());
+                pstm.setString(4, customer.getContactFirstName());
+                pstm.setString(5, customer.getPhone());
+                pstm.setString(6, customer.getAddressLine1());
+                pstm.setString(7, customer.getAddressLine2());
+                pstm.setString(8, customer.getCity());
+                pstm.setString(9, customer.getState());
+                pstm.setString(10, customer.getPostalCode());
+                pstm.setString(11, customer.getCountry());
+                pstm.setInt(12, customer.getSalesRepEmployeeNumber());
+                pstm.setDouble(13, customer.getCreditLimit());
+                state = pstm.executeUpdate() == 1;
+            }else{
+                query = "UPDATE customers SET customerName = ?, contactLastName = ?, contactFirstName = ?, phone = ?, addressLine1 = ?, " +
+                        "addressLine2 = ?, city = ?, state = ?, postalCode = ?, country = ?, salesRepEmployeeNumber = ?, creditLimit = ?" +
+                        "WHERE customerNumber = ?";
+                pstm = con.prepareStatement(query);
+                pstm.setInt(13, customer.getCustomerNumber());
+                pstm.setString(1, customer.getCustomerName());
+                pstm.setString(2, customer.getContactLastName());
+                pstm.setString(3, customer.getContactFirstName());
+                pstm.setString(4, customer.getPhone());
+                pstm.setString(5, customer.getAddressLine1());
+                pstm.setString(6, customer.getAddressLine2());
+                pstm.setString(7, customer.getCity());
+                pstm.setString(8, customer.getState());
+                pstm.setString(9, customer.getPostalCode());
+                pstm.setString(10, customer.getCountry());
+                pstm.setInt(11, customer.getSalesRepEmployeeNumber());
+                pstm.setDouble(12, customer.getCreditLimit());
+                state = pstm.executeUpdate() == 1;
             }
-
-            flag = cstm.executeUpdate() == 1;
-        }catch(SQLException e){
-            System.out.printf("Ha sucedido algún error: %s", e.getMessage());
-        }finally{
-            ConnectionMysql.closeConnections(con, cstm, rs);
+        }catch (SQLException e){
+            e.printStackTrace();
+        }finally {
+            closeConnections();
         }
-        return flag;
+        return state;
     }
 
-    public boolean delete(int customerNumber){
-        boolean flag = false;
-
+    public boolean deleteCustomer(int customerNumber){
+        boolean state = false;
         try{
             con = ConnectionMysql.getConnection();
-            cstm = con.prepareCall("DELETE FROM customers WHERE customerNumber = ?;");
-            cstm.setInt(1, customerNumber);
-            flag = cstm.executeUpdate() == 1;
-        }catch(SQLException e){
-            System.out.printf("Ha sucedido algún error: %s", e.getMessage());
-        }finally{
-            ConnectionMysql.closeConnections(con, cstm, rs);
+            query = "DELETE FROM customers WHERE customerNumber = ?;";
+            pstm = con.prepareStatement(query);
+            pstm.setInt(1, customerNumber);
+            state = pstm.executeUpdate() == 1;
+        }catch (SQLException e){
+            e.printStackTrace();
+        }finally {
+            closeConnections();
         }
-        return flag;
+        return state;
     }
+
+    public void closeConnections(){
+        try{
+            if(con != null){
+                con.close();
+            }
+            if(pstm != null){
+                pstm.close();
+            }
+            if(rs != null){
+                rs.close();
+            }
+            if(stm != null){
+                stm.close();
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+    }
+
 }
